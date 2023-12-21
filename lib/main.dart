@@ -18,25 +18,22 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Teste GetX'),
+      home: MyHomePage(title: 'Teste GetX'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
+class MyHomePage extends StatelessWidget {
   final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final controller = Get.put(GetXControl());
+ 
+  MyHomePage({super.key, required this.title}) {
+    Get.lazyPut(() => GControl());
+  }
 
   @override
   Widget build(BuildContext context) {
+    var controller = Get.find<GControl>();
+
     return DefaultTabController(
       length: controller.tabPages.value.length,
       child: Scaffold(
@@ -60,8 +57,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: TabBarView(
           children: [
-            Pagina(tag: 'Aba1'),
-            Pagina(tag: 'Aba2'),
+            Get.put(Pagina(tag: 'Aba1'), tag: 'Aba1'),
+            Get.put(Pagina(tag: 'Aba2'), tag: 'Aba2'),
           ],
         ),
       ),
@@ -69,13 +66,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class GetXControl extends GetxController {
+class GControl extends GetxController {
   final tabPages = <Tab>[].obs;
   final bgColor = Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
 
-
   final tecUltimo = TextEditingController();
   final tecDisabled = TextEditingController();
+
+  var msg = 'Mensagem de teste'.obs;
 
   var listaTeste = <String>[].obs;
 
@@ -130,17 +128,33 @@ class Pagina extends StatelessWidget {
   final String tag;
 
   Pagina({super.key, required this.tag}) {
-    Get.lazyPut(() => GetXControl(), tag: tag);
+    Get.lazyPut(() => GControl(), tag: tag);
   }
 
   @override
   Widget build(BuildContext context) {
-    var controller = Get.find<GetXControl>(tag: tag);
+    var controller = Get.find<GControl>(tag: tag);
+    var nomeEstranho = 'nomeEstranho'.obs;
 
     return Container(
       color: controller.bgColor,
       child: Column(
         children: [
+          Row(
+            children: [
+              Obx(
+                () => Text(controller.msg.value),
+              ),
+              Container(
+                width: 20,
+                height: 20,
+                color: Colors.red,
+              ),
+              Obx(
+                () => Text(nomeEstranho.value),
+              ),
+            ],
+          ),
           Container(
             width: 200,
             decoration: BoxDecoration(
@@ -149,12 +163,15 @@ class Pagina extends StatelessWidget {
             ),
             child: TextFormField(
               controller: controller.tecUltimo,
-              onFieldSubmitted: (value) => controller.listaTeste.add(value),
+              onFieldSubmitted: (value) {
+                controller.listaTeste.add(value);
+                nomeEstranho.value = value;
+                controller.msg.value = value;
+              },
             ),
           ),
-                    Container(
+          Container(
             width: 200,
-            
             decoration: BoxDecoration(
               border: Border.all(color: Colors.black),
               borderRadius: BorderRadius.circular(10),
@@ -162,7 +179,10 @@ class Pagina extends StatelessWidget {
             child: TextFormField(
               enabled: false,
               controller: controller.tecDisabled,
-              onFieldSubmitted: (value) => controller.listaTeste.add(value),
+              onFieldSubmitted: (value) {
+                controller.listaTeste.add(value);
+                nomeEstranho.value = value;
+              },
             ),
           ),
           Obx(
